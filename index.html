@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChipChart — AI-Powered PC & Laptop Recommendations</title>
+    <meta name="description" content="Find your perfect PC build or laptop with AI-powered recommendations. Compatibility checks, FPS estimates, and best prices from Amazon, Flipkart, and more." />
+    <meta name="author" content="ChipChart" />
+    <meta name="keywords" content="PC build, custom PC, laptop recommendations, gaming PC, workstation, computer parts, India, ChipChart" />
+
+    <meta property="og:title" content="ChipChart — AI-Powered PC & Laptop Recommendations" />
+    <meta property="og:description" content="Find your perfect PC build or laptop with AI-powered recommendations. Compatibility checks, FPS estimates, and best prices." />
+    <meta property="og:type" content="website" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@ChipChart" />
+
+    <link rel="icon" href="/favicon.png" />
+    <link rel="canonical" href="https://chipchart.app" />
+    <script>
+      (function() {
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
