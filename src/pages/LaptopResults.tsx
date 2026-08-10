@@ -40,20 +40,41 @@ function buildStoreUrl(store: string, searchQuery: string): string {
   }
 }
 
+function cleanSearchQueryForStore(laptop: any): string {
+  const brand = laptop.brand || '';
+  const model = laptop.model || '';
+  const gpu = laptop.gpu || '';
+  
+  // If model already contains brand, don't duplicate it
+  let base = model;
+  if (!model.toLowerCase().includes(brand.toLowerCase())) {
+    base = `${brand} ${model}`;
+  }
+  
+  // If model doesn't contain GPU, append GPU
+  if (gpu && !model.toLowerCase().includes(gpu.toLowerCase())) {
+    base = `${base} ${gpu}`;
+  }
+  
+  // Append laptop to force laptop results instead of accessories
+  return `${base} laptop`.trim();
+}
+
 // ─── DealPanel (Flipkart inside here) ──────────────────────
 interface DealPanelProps {
   storePrices: LaptopStorePrice[];
   lowestPrice?: number;
   basePrice: number;
-  storeSearchQuery: string;
+  laptop: any;
 }
 
-const DealPanel = ({ storePrices, lowestPrice, basePrice, storeSearchQuery }: DealPanelProps) => {
+const DealPanel = ({ storePrices, lowestPrice, basePrice, laptop }: DealPanelProps) => {
+  const simplifiedQuery = cleanSearchQueryForStore(laptop);
   const targetPrice = lowestPrice ?? Math.max(...storePrices.map(s => s.price), basePrice);
 
   const allStores = [...storePrices];
   if (!allStores.find(s => s.store === 'Flipkart')) {
-    allStores.push({ store: 'Flipkart' as any, price: basePrice, inStock: true, url: buildStoreUrl('Flipkart', storeSearchQuery) });
+    allStores.push({ store: 'Flipkart' as any, price: basePrice, inStock: true, url: buildStoreUrl('Flipkart', simplifiedQuery) });
   }
 
   const sorted = allStores
@@ -79,7 +100,7 @@ const DealPanel = ({ storePrices, lowestPrice, basePrice, storeSearchQuery }: De
       <div className="divide-y divide-border">
         {sorted.map((store) => {
           const style = STORE_STYLES[store.store] ?? STORE_STYLES['Amazon'];
-          const href = buildStoreUrl(store.store, storeSearchQuery);
+          const href = store.url || buildStoreUrl(store.store, simplifiedQuery);
           const isFlipkart = store.store === 'Flipkart';
           return (
             <a
@@ -108,6 +129,7 @@ const DealPanel = ({ storePrices, lowestPrice, basePrice, storeSearchQuery }: De
         })}
       </div>
     </div>
+
   );
 };
 
@@ -628,7 +650,7 @@ const LaptopResults = () => {
                       {isExpanded && (
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}>
                           <DealPanel storePrices={laptop.storePrices || []} lowestPrice={laptop.lowestPrice} basePrice={laptop.price}
-                            storeSearchQuery={laptop.searchQuery || `${laptop.brand} ${displayName} ${laptop.cpu}`} />
+                            laptop={laptop} />
                         </motion.div>
                       )}
                     </AnimatePresence>
