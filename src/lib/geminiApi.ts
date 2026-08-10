@@ -3,7 +3,7 @@ import { PCBuild, LaptopRecommendation } from "./recommendationEngine";
 //in this module we are using backend to fetch the recommendations for the pc and laptops
 //the backend returns the recommendations in the form of JSON objects.
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:5001';
 
 /*
 =============================================================================

@@ -10,7 +10,7 @@ export interface LivePriceResult {
 //api base url is the url of the backend server
 //api is used to fetch the live prices of the products in real time. the response contains the price, inStock, url, name and store.
 //this api is used to fetch the live prices of the products in real time.
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:5001';
 
 async function fetchLivePriceFromBackend(
   //this searchquery is used to search the product in the backend.
