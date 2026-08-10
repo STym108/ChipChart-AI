@@ -82,6 +82,11 @@ Strict Requirements:
 - Brand Preference: ${brandConstraint}
 - RAM: ${ramHint}
 
+Critical Availability & Realism Rules:
+1. ACTIVELY SOLD IN INDIA (2025/2026): Recommend ONLY laptop models that are currently in stock and actively sold in the Indian market as of 2025/2026. Do NOT recommend discontinued, legacy (e.g. 2022/2023 versions), or clearance models.
+2. VERIFIED SPECIFICATIONS ONLY: Do NOT hallucinate configurations. Recommend only standard, real-world retail configurations (e.g., do not combine an HP Envy x360 with a high-end discrete gaming GPU like an RTX 4050 unless that specific configuration exists and is sold in India).
+3. STANDARD SEARCHABLE NAMES: Use exact model families (e.g., "ASUS Vivobook 15", "Lenovo Legion Slim 5", "Acer Nitro V 15") so search queries match live listings.
+
 Return ONLY this JSON array (no conversational text):
 [
   {
