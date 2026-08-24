@@ -1,5 +1,7 @@
 # ChipChart AI 🖥️🔍
 
+> **Live Application URL**: [https://chipchart-ai.onrender.com](https://chipchart-ai.onrender.com)
+
 ChipChart AI is an AI-powered, real-time laptop and PC recommendation engine. It guides users through an interactive questionnaire about their budget, usage, and preferences, leverages advanced LLMs to generate tailored configurations, and cross-references them live against Indian e-commerce listings to fetch pricing, specs, and purchase links.
 
 ---
@@ -13,7 +15,7 @@ ChipChart AI is an AI-powered, real-time laptop and PC recommendation engine. It
 * **Performance Visualizations**: Embedded **Recharts** charts calculating and plotting FPS estimates across popular games (Valorant, Cyberpunk 2077, Elden Ring, RDR2, Fortnite, GTA V).
 * **Comparison Basket**: Persistent Zustand comparison drawer to add multiple components or builds and review them side-by-side.
 * **7-Day Response Caching**: Local caching of generated recommendations to minimize API costs and optimize network latency.
-
+ 
 ---
 
 ## 🛠️ Tech Stack
@@ -56,7 +58,7 @@ Make sure you have Node.js and npm/bun installed.
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/chipchart-ai.git
+git clone https://github.com/STym108/ChipChart-AI.git
 cd chipchart-ai
 ```
 
