@@ -29,6 +29,6 @@ if (!scraperApiKey) {
 
 // Safely instantiate now that apiKey is guaranteed to exist
 export const genAI = new GoogleGenerativeAI(apiKey);
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
-export const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+export const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
 export const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:5000';

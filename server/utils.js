@@ -6,7 +6,12 @@ export async function callGroq(prompt) {
     throw new Error('VITE_GROQ_API_KEY is missing in server environment');
   }
 
-  const candidateModels = Array.from(new Set([GROQ_MODEL, 'llama-3.1-8b-instant', 'gemma2-9b-it', 'llama-3.3-70b-versatile']));
+  const candidateModels = Array.from(new Set([
+    GROQ_MODEL,
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.8-27b',
+    'openai/gpt-oss-120b',
+  ]));
   let lastError = null;
 
   for (const model of candidateModels) {
@@ -73,6 +78,7 @@ export async function generateWithFallback(prompt) {
             topP: 0.9,
             maxOutputTokens: 8192,
             responseMimeType: 'application/json',
+            thinkingConfig: { thinkingBudget: 0 }
           }
         });
 
@@ -111,25 +117,26 @@ export async function generateWithFallback(prompt) {
       }
     }
 
-    // Secondary Gemini attempt with gemini-1.5-flash if primary was different and failed
-    if (GEMINI_MODEL !== 'gemini-1.5-flash') {
+    // Secondary Gemini attempt with gemini-3.8-flash if primary was different and failed
+    if (GEMINI_MODEL !== 'gemini-3.8-flash') {
       try {
-        console.log('[Gemini API] Trying gemini-1.5-flash secondary fallback...');
+        console.log('[Gemini API] Trying gemini-3.8-flash secondary fallback...');
         const backupModel = genAI.getGenerativeModel({
-          model: 'gemini-1.5-flash',
+          model: 'gemini-3.8-flash',
           generationConfig: {
             temperature: 0.2,
             topP: 0.9,
             maxOutputTokens: 8192,
             responseMimeType: 'application/json',
+            thinkingConfig: { thinkingBudget: 0 }
           }
         });
         const result = await backupModel.generateContent(prompt);
         const text = result.response.text();
-        console.log('[Gemini API] Success with gemini-1.5-flash');
+        console.log('[Gemini API] Success with gemini-3.8-flash');
         return text;
       } catch (backupErr) {
-        console.warn('[Gemini API] Secondary gemini-1.5-flash also failed:', backupErr.message?.substring(0, 100));
+        console.warn('[Gemini API] Secondary gemini-3.8-flash also failed:', backupErr.message?.substring(0, 100));
       }
     }
   }
@@ -147,14 +154,43 @@ export async function generateWithFallback(prompt) {
 
 // Clean markdown json format block wrapper
 export function extractJSON(text) {
-  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (!text) throw new Error('No content returned by the AI.');
+
+  let cleanText = text.trim();
+  const codeBlockMatch = cleanText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   if (codeBlockMatch) {
-    let jsonStr = codeBlockMatch[1].trim();
-    return jsonStr.replace(/,\s*([\]}])/g, '$1');
+    cleanText = codeBlockMatch[1].trim();
   }
 
-  const start = text.indexOf('[');
+  // 1. Direct JSON parse test
+  try {
+    const direct = JSON.parse(cleanText);
+    if (Array.isArray(direct)) return JSON.stringify(direct);
+    if (typeof direct === 'object' && direct !== null) {
+      for (const key of Object.keys(direct)) {
+        if (Array.isArray(direct[key])) return JSON.stringify(direct[key]);
+      }
+    }
+  } catch (e) {
+    // Continue to bracket walking
+  }
+
+  // 2. Bracket boundary walking
+  const start = cleanText.indexOf('[');
   if (start === -1) {
+    // Check if object wrapped
+    const objStart = cleanText.indexOf('{');
+    if (objStart !== -1) {
+      const objEnd = cleanText.lastIndexOf('}');
+      if (objEnd > objStart) {
+        try {
+          const parsed = JSON.parse(cleanText.slice(objStart, objEnd + 1).replace(/,\s*([\]}])/g, '$1'));
+          for (const key of Object.keys(parsed)) {
+            if (Array.isArray(parsed[key])) return JSON.stringify(parsed[key]);
+          }
+        } catch (err) {}
+      }
+    }
     throw new Error('No JSON array returned by the AI.');
   }
 
@@ -163,8 +199,8 @@ export function extractJSON(text) {
   let inString = false;
   let isEscaping = false;
 
-  for (let i = start; i < text.length; i++) {
-    const char = text[i];
+  for (let i = start; i < cleanText.length; i++) {
+    const char = cleanText[i];
     if (isEscaping) {
       isEscaping = false;
       continue;
@@ -191,14 +227,14 @@ export function extractJSON(text) {
   }
 
   if (end === -1) {
-    end = text.lastIndexOf(']');
+    end = cleanText.lastIndexOf(']');
   }
 
   if (start === -1 || end === -1 || start >= end) {
     throw new Error('Invalid JSON array boundaries returned from AI.');
   }
 
-  let jsonStr = text.slice(start, end + 1);
+  let jsonStr = cleanText.slice(start, end + 1);
   return jsonStr.replace(/,\s*([\]}])/g, '$1');
 }
 
