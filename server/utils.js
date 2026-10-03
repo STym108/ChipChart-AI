@@ -1,46 +1,58 @@
 import { genAI, GEMINI_MODEL, GROQ_MODEL, groqApiKey, scraperApiKey } from './config.js';
 
-// Call Groq API via fetch
+// Call Groq API via fetch with multi-model fallback
 export async function callGroq(prompt) {
   if (!groqApiKey) {
     throw new Error('VITE_GROQ_API_KEY is missing in server environment');
   }
 
-  console.log(`[Groq API] Falling back to Groq (${GROQ_MODEL})...`);
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${groqApiKey}`,
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert product recommender. Always respond with ONLY a valid JSON array. No markdown, no code blocks, no explanation — just the raw JSON array.'
+  const candidateModels = Array.from(new Set([GROQ_MODEL, 'llama-3.1-8b-instant', 'gemma2-9b-it', 'llama-3.3-70b-versatile']));
+  let lastError = null;
+
+  for (const model of candidateModels) {
+    try {
+      console.log(`[Groq API] Attempting Groq call with model: ${model}...`);
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqApiKey}`,
         },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.2,
-      max_tokens: 8192,
-    }),
-  });
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert product recommender. Always respond with ONLY a valid JSON array. No markdown, no code blocks, no explanation — just the raw JSON array.'
+            },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.2,
+          max_tokens: 8192,
+        }),
+      });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Groq API error ${response.status}: ${errorText.substring(0, 200)}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Groq API error ${response.status} with ${model}: ${errorText.substring(0, 200)}`);
+      }
+
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content;
+
+      if (!text) {
+        throw new Error(`Groq returned empty response with ${model}`);
+      }
+
+      console.log(`[Groq API] Success with model: ${model}`);
+      return text;
+    } catch (err) {
+      console.warn(`[Groq API] Model ${model} failed:`, err.message?.substring(0, 150));
+      lastError = err;
+    }
   }
 
-  const data = await response.json();
-  const text = data.choices?.[0]?.message?.content;
-
-  if (!text) {
-    throw new Error('Groq returned empty response');
-  }
-
-  console.log(`[Groq API] Success with model: ${GROQ_MODEL}`);
-  return text;
+  throw lastError || new Error('All Groq candidate models failed');
 }
 
 // Generate text with fallback mechanism: Gemini -> Groq
@@ -96,6 +108,28 @@ export async function generateWithFallback(prompt) {
 
         console.warn(`[Gemini API] Failed with ${GEMINI_MODEL}:`, errMsg.substring(0, 120));
         break;
+      }
+    }
+
+    // Secondary Gemini attempt with gemini-1.5-flash if primary was different and failed
+    if (GEMINI_MODEL !== 'gemini-1.5-flash') {
+      try {
+        console.log('[Gemini API] Trying gemini-1.5-flash secondary fallback...');
+        const backupModel = genAI.getGenerativeModel({
+          model: 'gemini-1.5-flash',
+          generationConfig: {
+            temperature: 0.2,
+            topP: 0.9,
+            maxOutputTokens: 8192,
+            responseMimeType: 'application/json',
+          }
+        });
+        const result = await backupModel.generateContent(prompt);
+        const text = result.response.text();
+        console.log('[Gemini API] Success with gemini-1.5-flash');
+        return text;
+      } catch (backupErr) {
+        console.warn('[Gemini API] Secondary gemini-1.5-flash also failed:', backupErr.message?.substring(0, 100));
       }
     }
   }

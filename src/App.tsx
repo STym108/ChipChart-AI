@@ -10,7 +10,7 @@ import LaptopResults from "./pages/LaptopResults";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
-
+//the prompts are being in the file : 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>

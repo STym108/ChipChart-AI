@@ -47,6 +47,8 @@ app.get('*', (req, res) => {
 SERVER LAUNCH
 =============================================================================
 */
+//the prompt is being made in the frontend and sent to the backend to get prices.
+//prompt to be improved
 app.listen(PORT, () => {
   console.log(`===================================================`);
   console.log(`🚀 ChipChart AI Backend server running on:`);
